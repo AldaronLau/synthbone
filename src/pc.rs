@@ -17,6 +17,9 @@ fn set_settings(pcm: &alsa::pcm::PCM) {
 				- hwp.get_period_size().unwrap()
 		)
 		.unwrap();
+
+	println!("{} {}", hwp.get_buffer_size().unwrap(), hwp.get_period_size().unwrap());
+
 	pcm.sw_params(&swp).unwrap();
 }
 
