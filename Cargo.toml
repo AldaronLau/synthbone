@@ -6,3 +6,6 @@ authors = ["Jeron A. Lau <jeron.lau@plopgrizzly.com>"]
 [dependencies]
 sample = "0.9.1"
 alsa = "0.2.0"
+
+[replace]
+"alsa:0.2.0" = { path = "alsa-rs" }
