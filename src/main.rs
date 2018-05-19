@@ -32,12 +32,13 @@ fn main() {
 			let mut j = (*i as f32) / (::std::u16::MAX as f32);
 
 			// Clipping distortion by amplification.
-			j *= 32.0;
+			j *= 16.0;
 
 			// Apply reverb here.
 			j += *recording.last().unwrap_or(&0.0) * 0.8;
 
 			recording.push(j);
+//			println!("{}", j);
 
 			// Back to i16
 			*i = if j < 1.0 && j > -1.0 {

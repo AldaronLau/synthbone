@@ -74,7 +74,10 @@ impl PCM {
 			Direction::Capture => alsa::SND_PCM_STREAM_CAPTURE,
 			Direction::Playback => alsa::SND_PCM_STREAM_PLAYBACK
 		};
-		let flags = /*if nonblock { alsa::SND_PCM_ASYNC } else { */0;
+		let flags = match dir {
+			Direction::Capture => alsa::SND_PCM_ASYNC,
+			Direction::Playback => 0,
+		};/*if nonblock { *//* } else { 0;*/
 		acheck!(context, snd_pcm_open(&mut r, name.as_ptr(), stream, flags)).map(|_| PCM(r, cell::Cell::new(false)))
 	}
 
@@ -342,6 +345,10 @@ impl<'a> HwParams<'a> {
 		let (mut v, mut d) = (0,0);
 		acheck!(context, snd_pcm_hw_params_get_period_size(self.0, &mut v, &mut d)).map(|_| v as Frames)
 	}
+
+//	pub fn set_period_size(&self, context: &Context, v: Frames) -> Result<()> {//
+//		acheck!(context, snd_pcm_hw_params_set_period_size((self.1).0, self.0, v as c_uint, 0)).map(|_| ())
+//	}
 
 	pub fn get_buffer_size(&self, context: &Context) -> Result<Frames> {
 		let mut v = 0;

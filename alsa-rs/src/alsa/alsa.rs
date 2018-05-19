@@ -95,6 +95,7 @@ pub struct Context {
 	pub snd_pcm_hw_params_copy: unsafe extern "C" fn(dst: *mut snd_pcm_hw_params_t, src: *const snd_pcm_hw_params_t),
 	pub snd_pcm_hw_params_get_buffer_size: unsafe extern "C" fn(params: *const snd_pcm_hw_params_t, val: *mut snd_pcm_uframes_t) -> c_int,
 	pub snd_pcm_hw_params_get_period_size: unsafe extern "C" fn(params: *const snd_pcm_hw_params_t, frames: *mut snd_pcm_uframes_t, dir: *mut c_int) -> c_int,
+	pub snd_pcm_hw_params_set_period_size: unsafe extern "C" fn(*mut snd_pcm_t, *mut snd_pcm_hw_params_t, snd_pcm_uframes_t, c_int) -> c_int,
 	pub snd_pcm_hw_params_get_access: unsafe extern "C" fn(params: *const snd_pcm_hw_params_t, _access: *mut snd_pcm_access_t) -> c_int,
 	pub snd_pcm_hw_params_get_format: unsafe extern "C" fn(params: *const snd_pcm_hw_params_t, val: *mut snd_pcm_format_t) -> c_int,
 	pub snd_pcm_hw_params_set_access: unsafe extern "C" fn(pcm: *mut snd_pcm_t, params: *mut snd_pcm_hw_params_t, _access: snd_pcm_access_t) -> c_int,
@@ -121,7 +122,7 @@ pub struct Context {
 
 fn dlsym<T>(lib: *mut c_void, name: &[u8]) -> T {
 	unsafe {
-		let fn_ptr = libc::dlsym(lib, &name[0] as *const _ as *const i8);
+		let fn_ptr = libc::dlsym(lib, &name[0] as *const _ as *const _);
 
 		::std::mem::transmute_copy::<*mut c_void, T>(&fn_ptr)
 	}
@@ -132,7 +133,7 @@ impl Context {
 		// TODO: dropping lib.
 		let lib = b"libasound.so.2\0";
 		let lib = unsafe {
-			libc::dlopen(&lib[0] as *const _ as *const i8, libc::RTLD_NOW | libc::RTLD_GLOBAL)
+			libc::dlopen(&lib[0] as *const _ as *const _, libc::RTLD_NOW | libc::RTLD_GLOBAL)
 		};
 
 		Context {
@@ -149,6 +150,7 @@ impl Context {
 			snd_pcm_hw_params_copy: dlsym(lib, b"snd_pcm_hw_params_copy\0"),
 			snd_pcm_hw_params_get_buffer_size: dlsym(lib, b"snd_pcm_hw_params_get_buffer_size\0"),
 			snd_pcm_hw_params_get_period_size: dlsym(lib, b"snd_pcm_hw_params_get_period_size\0"),
+			snd_pcm_hw_params_set_period_size: dlsym(lib, b"snd_pcm_hw_params_set_period_size\0"),
 			snd_pcm_hw_params_get_access: dlsym(lib, b"snd_pcm_hw_params_get_access\0"),
 			snd_pcm_hw_params_get_format: dlsym(lib, b"snd_pcm_hw_params_get_format\0"),
 			snd_pcm_hw_params_set_access: dlsym(lib, b"snd_pcm_hw_params_set_access\0"),
