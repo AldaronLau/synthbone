@@ -57,15 +57,11 @@ use super::{Direction, ValueOr};
 pub type Frames = alsa::snd_pcm_sframes_t;
 
 /// [snd_pcm_t](http://www.alsa-project.org/alsa-doc/alsa-lib/group___p_c_m.html) wrapper - start here for audio playback and recording
-pub struct PCM(*mut alsa::snd_pcm_t, cell::Cell<bool>);
+pub struct PCM(*mut alsa::snd_pcm_t);
 
 unsafe impl Send for PCM {}
 
 impl PCM {
-	fn check_has_io(&self) {
-		if self.1.get() { panic!("No hw_params call or additional IO objects allowed") }
-	}
-
 	/// Wrapper around open that takes a &str instead of a &CStr
 	pub fn new(context: &Context, name: &str, dir: Direction/*, nonblock: bool*/) -> Result<PCM> {
 		let name = CString::new(name).unwrap();
@@ -78,7 +74,7 @@ impl PCM {
 			Direction::Capture => alsa::SND_PCM_ASYNC,
 			Direction::Playback => 0,
 		};/*if nonblock { *//* } else { 0;*/
-		acheck!(context, snd_pcm_open(&mut r, name.as_ptr(), stream, flags)).map(|_| PCM(r, cell::Cell::new(false)))
+		acheck!(context, snd_pcm_open(&mut r, name.as_ptr(), stream, flags)).map(|_| PCM(r))
 	}
 
 	pub fn prepare(&self, context: &Context) {
@@ -107,14 +103,7 @@ impl PCM {
 		}
 	}
 
-	pub fn io_i16(self, context: &Context) -> Result<IO<i16>> {
-		self.verify_format(Format::s16(), context).map(|_| IO::new(self))
-	}
-
-	/// Sets hw parameters. Note: No IO object can exist for this PCM
-	/// when hw parameters are set.
 	pub fn hw_params(&self, context: &Context, h: &HwParams) -> Result<()> {
-		self.check_has_io();
 		acheck!(context, snd_pcm_hw_params(self.0, h.0)).map(|_| ())
 	}
 
@@ -135,73 +124,23 @@ impl PCM {
 	pub fn drop(&self, context: &Context) {
 		unsafe { (context.snd_pcm_close)(self.0) };
 	}
-}
-
-/// Sample format dependent struct for reading from and writing data to a `PCM`.
-///
-/// Note: Only one IO object is allowed in scope at a time (for mmap safety).
-pub struct IO<S: Copy>(PCM, PhantomData<S>);
-
-impl<S: Copy> Drop for IO<S> {
-	fn drop(&mut self) { (self.0).1.set(false) }
-}
-
-impl<S: Copy> IO<S> {
-	fn new(a: PCM) -> IO<S> {
-		a.check_has_io();
-		a.1.set(true);
-		IO(a, PhantomData)
-	}
-
-	fn to_frames(&self, context: &Context, b: usize) -> alsa::snd_pcm_uframes_t {
-		// TODO: Do we need to check for overflow here?
-		self.0.bytes_to_frames(context, (b * size_of::<S>()) as isize) as alsa::snd_pcm_uframes_t
-	}
 
 	/// On success, returns number of *frames* written.
 	/// (Multiply with number of channels to get number of items in buf successfully written.)
-	pub fn writei(&self, context: &Context, buf: &[S]) -> Result<usize> {
-		acheck!(context, snd_pcm_writei((self.0).0, buf.as_ptr() as *const c_void, self.to_frames(context, buf.len()))).map(|r| r as usize)
+	pub fn writei(&self, context: &Context, buf: &[i16]) -> Result<usize> {
+		let nsamples = buf.len() as u64;
+
+		acheck!(context, snd_pcm_writei(self.0, buf.as_ptr() as *const c_void, nsamples)).map(|r| r as usize)
 	}
 
 	/// On success, returns number of *frames* read.
 	/// (Multiply with number of channels to get number of items in buf successfully read.)
-	pub fn readi(&self, context: &Context, buf: &mut [S]) -> Result<usize> {
-		acheck!(context, snd_pcm_readi((self.0).0, buf.as_mut_ptr() as *mut c_void, self.to_frames(context, buf.len()))).map(|r| r as usize)
-	}
+	pub fn readi(&self, context: &Context, buf: &mut [i16]) -> Result<usize> {
+		let nsamples = buf.len() as u64;
 
-	pub fn status(&self, context: &Context) -> Result<Status> {
-		self.0.status(context)
-	}
-
-	pub fn prepare(&self, context: &Context) -> () {
-		self.0.prepare(context)
-	}
-
-	pub fn recover(&self, context: &Context, err: c_int, silent: bool) -> Result<()> {
-		self.0.recover(context, err, silent)
+		acheck!(context, snd_pcm_readi(self.0, buf.as_mut_ptr() as *mut c_void, nsamples)).map(|r| r as usize)
 	}
 }
-
-/*impl<'a, S: Copy> io::Read for IO<'a, S> {
-	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-		let size = self.0.bytes_to_frames(buf.len() as isize) as alsa::snd_pcm_uframes_t; // TODO: Do we need to check for overflow here?
-		let r = unsafe { alsa::snd_pcm_readi((self.0).0, buf.as_mut_ptr() as *mut c_void, size) };
-		if r < 0 { Err(io::Error::from_raw_os_error(r as i32)) }
-		else { Ok(self.0.frames_to_bytes(r) as usize) }
-	}
-}
-
-impl<'a, S: Copy> io::Write for IO<'a, S> {
-	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-		let size = self.0.bytes_to_frames(buf.len() as isize) as alsa::snd_pcm_uframes_t; // TODO: Do we need to check for overflow here?
-		let r = unsafe { alsa::snd_pcm_writei((self.0).0, buf.as_ptr() as *const c_void, size) };
-		if r < 0 { Err(io::Error::from_raw_os_error(r as i32)) }
-		else { Ok(self.0.frames_to_bytes(r) as usize) }
-	}
-	fn flush(&mut self) -> io::Result<()> { Ok(()) }
-}*/
-
 
 alsa_enum!(
 	/// [SND_PCM_STATE_xxx](http://www.alsa-project.org/alsa-doc/alsa-lib/group___p_c_m.html) constants

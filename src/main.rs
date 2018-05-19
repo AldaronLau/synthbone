@@ -4,9 +4,7 @@ extern crate sample;
 // mod pc;
 
 fn main() {
-	let ad = alsa::AudioDevice::new();
-	let player = alsa::Player::new(&ad);
-	let capturer = alsa::Capturer::new(&ad);
+	let audio = alsa::AudioManager::new();
 
 	let mut recording = vec![];
 //	let mut captured = 0;
@@ -18,7 +16,7 @@ fn main() {
 		// introducing latency.
 		let mut buf = [0i16; 16];
 
-		let l = capturer.capture(&ad, &mut buf);
+		let l = audio.pull(&mut buf);
 
 		if l == 0 { continue } else {
 //			captured += l;
@@ -49,7 +47,7 @@ fn main() {
 		}
 
 //		played += buf2.len();
-		player.play(&ad, &buf2);
+		audio.push(&buf2);
 
 //		println!("{} -> {}", capturer.delay(&ad), player.delay(&ad));
 	}
