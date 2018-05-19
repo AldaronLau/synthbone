@@ -88,7 +88,7 @@ impl Player {
 
 
 //			panic!("buffer underrun!");
-//			println!("buffer underrun!");
+			println!("buffer underrun!");
 		}
 	}
 

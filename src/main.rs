@@ -16,7 +16,7 @@ fn main() {
 		// 4 sample buffer works really well, no buffer underruns.  4 is
 		// the least number of samples we can get at a time without
 		// introducing latency.
-		let mut buf = [0i16; 2048];
+		let mut buf = [0i16; 16];
 
 		let l = capturer.capture(&ad, &mut buf);
 
@@ -50,7 +50,7 @@ fn main() {
 //		played += buf2.len();
 		player.play(&ad, &buf2);
 
-		println!("{} -> {}", capturer.delay(&ad), player.delay(&ad));
+//		println!("{} -> {}", capturer.delay(&ad), player.delay(&ad));
 	}
 
 	
