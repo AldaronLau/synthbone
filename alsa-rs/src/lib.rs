@@ -30,7 +30,6 @@ impl AudioManager {
 				"default", //"bluealsa:HCI=hci0,DEV=08:EB:ED:EE:A7:47,PROFILE=a2dp",
 				alsa::Direction::Playback).unwrap();
 			set_settings(&context, &pcm);
-			pcm.prepare(&context);
 			// Make sure we don't start the stream too early
 			{
 				let hwp = pcm.hw_params_current(&context).unwrap();
@@ -57,17 +56,17 @@ impl AudioManager {
 				println!("CR: {}", hwp.get_rate(&context).unwrap());
 				hwp.drop(&context);
 			}
-	//		pcm.prepare(&context); // TODO: start?
 			pcm
 		};
+
+		speaker.prepare(&context);
+		microphone.start(&context);
 
 		let am = AudioManager {
 			context,
 			speaker,
 			microphone,
 		};
-
-		am.push(vec![0; 2048].as_slice());
 
 		am
 	}
@@ -94,11 +93,15 @@ impl AudioManager {
 
 	/// Pull data from the microphone input.
 	pub fn pull(&self, buffer: &mut [i16]) -> usize {
-//		if self.delay(self) != 0 {
-			self.microphone.readi(&self.context, buffer).unwrap_or(0)
-//		} else {
-//			0
-//		}
+		let mut avail = self.microphone.avail(&self.context) as usize;
+
+		if avail > buffer.len()  {
+			avail = buffer.len();
+		}
+
+		let buffer = &mut buffer[..avail];
+
+		self.microphone.readi(&self.context, buffer).unwrap_or(0)
 	}
 }
 

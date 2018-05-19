@@ -71,8 +71,8 @@ impl PCM {
 			Direction::Playback => alsa::SND_PCM_STREAM_PLAYBACK
 		};
 		let flags = match dir {
-			Direction::Capture => alsa::SND_PCM_ASYNC,
-			Direction::Playback => 0,
+			Direction::Capture => 2,
+			Direction::Playback => 1,
 		};/*if nonblock { *//* } else { 0;*/
 		acheck!(context, snd_pcm_open(&mut r, name.as_ptr(), stream, flags)).map(|_| PCM(r))
 	}
@@ -80,6 +80,12 @@ impl PCM {
 	pub fn prepare(&self, context: &Context) {
 		unsafe {
 			(context.snd_pcm_prepare)(self.0);
+		}
+	}
+
+	pub fn start(&self, context: &Context) {
+		unsafe {
+			(context.snd_pcm_start)(self.0);
 		}
 	}
 
@@ -125,10 +131,17 @@ impl PCM {
 		unsafe { (context.snd_pcm_close)(self.0) };
 	}
 
+	/// Get the number of *frames* available.
+	pub fn avail(&self, context: &Context) -> Frames {
+		unsafe {
+			(context.snd_pcm_avail)(self.0) as Frames
+		}
+	}
+
 	/// On success, returns number of *frames* written.
 	/// (Multiply with number of channels to get number of items in buf successfully written.)
 	pub fn writei(&self, context: &Context, buf: &[i16]) -> Result<usize> {
-		let nsamples = buf.len() as u64;
+		let nsamples = buf.len() as alsa::snd_pcm_uframes_t;
 
 		acheck!(context, snd_pcm_writei(self.0, buf.as_ptr() as *const c_void, nsamples)).map(|r| r as usize)
 	}
@@ -136,7 +149,7 @@ impl PCM {
 	/// On success, returns number of *frames* read.
 	/// (Multiply with number of channels to get number of items in buf successfully read.)
 	pub fn readi(&self, context: &Context, buf: &mut [i16]) -> Result<usize> {
-		let nsamples = buf.len() as u64;
+		let nsamples = buf.len() as alsa::snd_pcm_uframes_t;
 
 		acheck!(context, snd_pcm_readi(self.0, buf.as_mut_ptr() as *mut c_void, nsamples)).map(|r| r as usize)
 	}

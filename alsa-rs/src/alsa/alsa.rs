@@ -118,6 +118,8 @@ pub struct Context {
 	pub snd_pcm_bytes_to_frames: unsafe extern "C" fn(pcm: *mut snd_pcm_t, bytes: ssize_t) -> snd_pcm_sframes_t,
 	pub snd_pcm_recover: unsafe extern "C" fn(pcm: *mut snd_pcm_t, err: c_int, silent: c_int) -> c_int,
 	pub snd_pcm_prepare: unsafe extern "C" fn(pcm: *mut snd_pcm_t) -> c_int,
+	pub snd_pcm_start: unsafe extern "C" fn(pcm: *mut snd_pcm_t) -> c_int,
+	pub snd_pcm_avail: unsafe extern "C" fn(pcm: *mut snd_pcm_t) -> snd_pcm_sframes_t,
 }
 
 fn dlsym<T>(lib: *mut c_void, name: &[u8]) -> T {
@@ -173,6 +175,8 @@ impl Context {
 			snd_pcm_bytes_to_frames: dlsym(lib, b"snd_pcm_bytes_to_frames\0"),
 			snd_pcm_recover: dlsym(lib, b"snd_pcm_recover\0"),
 			snd_pcm_prepare: dlsym(lib, b"snd_pcm_prepare\0"),
+			snd_pcm_start: dlsym(lib, b"snd_pcm_start\0"),
+			snd_pcm_avail: dlsym(lib, b"snd_pcm_avail\0"),
 		}
 	}
 }

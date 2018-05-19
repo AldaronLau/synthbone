@@ -4,24 +4,12 @@ extern crate sample;
 // mod pc;
 
 fn main() {
-	let audio = alsa::AudioManager::new();
-
 	let mut recording = vec![];
-//	let mut captured = 0;
-//	let mut played = 0;
+	let audio = alsa::AudioManager::new();
+	let mut buf = [0i16; 16];
 
 	loop {
-		// 4 sample buffer works really well, no buffer underruns.  4 is
-		// the least number of samples we can get at a time without
-		// introducing latency.
-		let mut buf = [0i16; 16];
-
 		let l = audio.pull(&mut buf);
-
-		if l == 0 { continue } else {
-//			captured += l;
-//			println!("{}", player.delay(), l);
-		}
 
 		let buf2 = &mut buf[0..l];
 
@@ -36,7 +24,6 @@ fn main() {
 			j += *recording.last().unwrap_or(&0.0) * 0.8;
 
 			recording.push(j);
-//			println!("{}", j);
 
 			// Back to i16
 			*i = if j < 1.0 && j > -1.0 {
@@ -46,11 +33,6 @@ fn main() {
 			} as i16;
 		}
 
-//		played += buf2.len();
 		audio.push(&buf2);
-
-//		println!("{} -> {}", capturer.delay(&ad), player.delay(&ad));
 	}
-
-	
 }
