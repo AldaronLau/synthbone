@@ -7,7 +7,7 @@ fn set_settings(context: &alsa::Context, pcm: &alsa::pcm::PCM) {
 	// Set hardware parameters: 44100 Hz / Mono / 16 bit
 	let hwp = alsa::pcm::HwParams::any(context, pcm).unwrap();
 	hwp.set_channels(context, 1).unwrap();
-	hwp.set_rate(context, 44100, alsa::ValueOr::Nearest).unwrap();
+	hwp.set_rate(context, 48000, alsa::ValueOr::Nearest).unwrap();
 	hwp.set_format(context, alsa::pcm::Format::s16()).unwrap();
 	hwp.set_access(context, alsa::pcm::Access::RWInterleaved).unwrap();
 	pcm.hw_params(context, &hwp).unwrap();
@@ -107,24 +107,6 @@ impl AudioManager {
 	#[cfg(feature = "microphone")]
 	/// Pull data from the microphone input.
 	pub fn pull(&self, buffer: &mut [i16]) -> usize {
-		let mut avail = self.microphone.avail(&self.context) as usize;
-
-		if avail > buffer.len()  {
-			avail = buffer.len();
-		}
-
-		let buffer = &mut buffer[..avail];
-
 		self.microphone.readi(&self.context, buffer).unwrap_or(0)
 	}
 }
-
-//	pub fn delay(&self, ad: &AudioDevice) -> isize {
-//		self.pcm.status(&self.context).unwrap()
-//			.get_avail(&self.context) as isize
-//	}
-
-//	pub fn delay(&self, ad: &AudioDevice) -> isize {
-//		self.pcm.status(&self.context).unwrap()
-//			.get_avail(&self.context) as isize
-//	}

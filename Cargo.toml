@@ -15,6 +15,7 @@ path = "src/speaker.rs"
 sample = "0.9.1"
 alsa = "0.2.0"
 byteorder = "^1.2"
+opus = { path = "opus-rs" }
 
 [replace]
 "alsa:0.2.0" = { path = "alsa-rs" }
