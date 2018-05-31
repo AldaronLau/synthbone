@@ -15,6 +15,7 @@ readme = "README.md"
 libc = "0.2.21"
 nix = "0.9"
 
-[badges]
-is-it-maintained-issue-resolution = { repository = "diwic/alsa-rs" }
-is-it-maintained-open-issues = { repository = "diwic/alsa-rs" }
+[features]
+default = []
+microphone = []
+speaker = []

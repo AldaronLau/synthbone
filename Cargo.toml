@@ -3,9 +3,22 @@ name = "electric-trombone"
 version = "0.1.0"
 authors = ["Jeron A. Lau <jeron.lau@plopgrizzly.com>"]
 
+[[bin]]
+name = "mute" # code running inside the trombone mute on a Pi Zero W
+path = "src/mute.rs"
+
+[[bin]]
+name = "speaker" # code playing out the speaker (currently on laptop, phone later)
+path = "src/speaker.rs"
+
 [dependencies]
 sample = "0.9.1"
 alsa = "0.2.0"
+byteorder = "^1.2"
 
 [replace]
 "alsa:0.2.0" = { path = "alsa-rs" }
+
+[features]
+microphone = ["alsa/microphone"]
+speaker = ["alsa/speaker"]

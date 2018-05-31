@@ -16,7 +16,9 @@ fn set_settings(context: &alsa::Context, pcm: &alsa::pcm::PCM) {
 
 pub struct AudioManager {
 	context: alsa::Context,
+	#[cfg(feature = "speaker")]
 	speaker: alsa::pcm::PCM, // TODO: call drop(), it isn't being called rn.
+	#[cfg(feature = "microphone")]
 	microphone: alsa::pcm::PCM, // TODO: call drop(), it isn't being called rn.
 }
 
@@ -25,9 +27,11 @@ impl AudioManager {
 	pub fn new() -> Self {
 		let context = alsa::Context::new();
 
+		#[cfg(feature = "speaker")]
 		let speaker = {
 			let pcm = alsa::pcm::PCM::new(&context,
-				"default", //"bluealsa:HCI=hci0,DEV=08:EB:ED:EE:A7:47,PROFILE=a2dp",
+				"default",
+//				"bluealsa:HCI=hci0,DEV=08:EB:ED:EE:A7:47,PROFILE=a2dp",
 				alsa::Direction::Playback).unwrap();
 			set_settings(&context, &pcm);
 			// Make sure we don't start the stream too early
@@ -46,8 +50,9 @@ impl AudioManager {
 			pcm
 		};
 
+		#[cfg(feature = "microphone")]
 		let microphone = {
-			let pcm = alsa::pcm::PCM::new(&context, "hw:1,0",
+			let pcm = alsa::pcm::PCM::new(&context, "plughw:1,0",
 				alsa::Direction::Capture).unwrap();
 			set_settings(&context, &pcm);
 			{
@@ -59,18 +64,26 @@ impl AudioManager {
 			pcm
 		};
 
-		speaker.prepare(&context);
-		microphone.start(&context);
+		#[cfg(feature = "speaker")] {
+			speaker.prepare(&context);
+		}
+
+		#[cfg(feature = "microphone")] {
+			microphone.start(&context);
+		}
 
 		let am = AudioManager {
 			context,
+			#[cfg(feature = "speaker")]
 			speaker,
+			#[cfg(feature = "microphone")]
 			microphone,
 		};
 
 		am
 	}
 
+	#[cfg(feature = "speaker")]
 	/// Push data to the speaker output.
 	pub fn push(&self, buffer: &[i16]) {
 		if self.speaker.writei(&self.context, buffer).unwrap_or_else(|x| {
@@ -91,6 +104,7 @@ impl AudioManager {
 		}
 	}
 
+	#[cfg(feature = "microphone")]
 	/// Pull data from the microphone input.
 	pub fn pull(&self, buffer: &mut [i16]) -> usize {
 		let mut avail = self.microphone.avail(&self.context) as usize;
