@@ -1,12 +1,11 @@
 //! code running inside the trombone mute on a Pi Zero W
 
-extern crate alsa;
-extern crate sample;
-extern crate opus;
-
-use opus::{ Channels, Application };
+extern crate pitch; // for pitch detection
+extern crate alsa; // for microphone
+extern crate byteorder; // for networking endian
 
 use std::net::UdpSocket;
+use byteorder::{ NetworkEndian, WriteBytesExt };
 
 fn main() {
 	let socket = UdpSocket::bind(/*"10.0.0.83:42015"*/"raspberrypi.local:42015")
@@ -33,54 +32,26 @@ fn main() {
 	};
 	println!("Connected!");
 
-	let mut recording = vec![];
 	let audio = alsa::AudioManager::new();
-	let mut buf = [0i16; 480];
-	let mut netbuf = [0u8; 480*2];
-
-	let mut opus = opus::Encoder::new(48000, Channels::Mono,
-			Application::LowDelay)
-		.unwrap();
+	let mut buf = [0i16; 2048 /*480*/];
+	let mut buf2 = [0f32; 2048];
+	let mut netbuf = [0u8; 8]; // 2 f32s (hz/pitch, amplitude/volume)
 
 	loop {
 		let l = audio.pull(&mut buf);
 
 		if l == 0 { continue }
 
-		let buf2 = &mut buf[..l];
-
-		for i in buf2.iter_mut() {
-			// Convert to float
-			let mut j = (*i as f32) / (::std::i16::MAX as f32);
-
-			// Noise reduction (floor of 0.1)
-			if j < 0.05 && j > -0.05 {
-				j = 0.0;
-			}
-
-			// Clipping distortion by amplification.
-			j *= 16.0;
-
-			// Apply reverb here.
-			j += *recording.last().unwrap_or(&0.0) * 0.8;
-
-			recording.push(j);
-
-			// Back to i16
-			*i = if j < 1.0 && j > -1.0 {
-				(j * (::std::i16::MAX as f32)) as i16
-			} else if j > 0.0 { // Positive Clipping
-				::std::i16::MAX
-			} else { // Negative Clipping
-				::std::i16::MIN
-			};
+		for i in 0..l {
+			buf2[i] = buf[i] as f32;
 		}
 
-		println!("{}", buf2.len());
+		let (hz, amplitude) = pitch::detect(&buf2);
 
-		let nl = opus.encode(buf2, &mut netbuf).unwrap();
+		(&mut netbuf[0..4]).write_f32::<NetworkEndian>(hz).unwrap();
+		(&mut netbuf[4..8]).write_f32::<NetworkEndian>(amplitude)
+			.unwrap();
 
-		socket.send_to(&netbuf[..nl], &connection)
-			.expect("Couldn't send");
+		socket.send_to(&netbuf, &connection).expect("Couldn't send");
 	}
 }

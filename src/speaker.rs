@@ -1,15 +1,15 @@
 //! code playing out the speaker (currently on laptop, phone later)
 
-extern crate alsa;
-extern crate opus;
-
-use opus::Channels;
+extern crate pitch; // for pitch detection
+extern crate alsa; // for speaker
+extern crate byteorder; // for networking endian
 
 use std::net::UdpSocket;
+use byteorder::{ NetworkEndian, ReadBytesExt };
 
 fn main() {
-	let audio = alsa::AudioManager::new();
-	let mut buf = [0i16; 480];
+//	let audio = alsa::AudioManager::new();
+//	let mut buf = [0i16; 480];
 
 	let socket = UdpSocket::bind(/*"192.168.122.1:42015"*/"192.168.4.14:42015")
 		.expect("Could not bind socket");
@@ -18,18 +18,19 @@ fn main() {
 		.expect("Couldn't send packet.");
 	println!("Connected!");
 
-	let mut netbuf = [0u8; 480*2];
-
-	let mut opus = opus::Decoder::new(48000, Channels::Mono).unwrap();
+	let mut netbuf = [0u8; 8];
 
 	loop {
 		match socket.recv_from(&mut netbuf) {
-			Ok((size, _src)) => {
-				let l = opus.decode(&netbuf[..size], &mut buf, false)
-					.unwrap();
+			Ok((_size, _src)) => {
+				let hz = (&netbuf[0..4])
+					.read_f32::<NetworkEndian>().unwrap();
+				let amplitude = (&netbuf[4..8])
+					.read_f32::<NetworkEndian>().unwrap();
 
-				let buf2 = &buf[..l];
-				audio.push(&buf2);
+				println!("{} {}", hz, amplitude);
+
+//				audio.push(&buf2);
 			},
 			Err(e) => {
 				eprintln!("couldn't recieve a datagram: {}", e);

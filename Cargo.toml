@@ -11,11 +11,16 @@ path = "src/mute.rs"
 name = "speaker" # code playing out the speaker (currently on laptop, phone later)
 path = "src/speaker.rs"
 
+[[bin]] # TODO: remove
+name = "synth"
+path = "src/synth.rs"
+
 [dependencies]
-sample = "0.9.1"
-alsa = "0.2.0"
-byteorder = "^1.2"
-opus = { path = "opus-rs" }
+sample = "0.9"
+alsa = "0.2"
+byteorder = "1.2"
+pitch = "0.1"
+rand = "0.5"
 
 [replace]
 "alsa:0.2.0" = { path = "alsa-rs" }
