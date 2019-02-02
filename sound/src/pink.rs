@@ -15,7 +15,7 @@ const PFIRBM4: f64 = 2048.0 * 0.000776;
 const PFIRBM5: f64 = 2048.0 * -0.000486;
 const PFIRBM6: f64 = 2048.0 * 0.002017;
 
-const PNMASK: [u8; 256] = [0; 256];/*
+const PNMASK: [u8; 256] = [
 	0u8, 0x80u8, 0x40u8, 0x80u8, 0x20u8, 0x80u8, 0x40u8, 0x80u8, 0x10u8,
 		0x80u8, 0x40u8, 0x80u8, 0x20u8, 0x80u8, 0x40u8, 0x80u8,
 	8u8, 0x80u8, 0x40u8, 0x80u8, 0x20u8, 0x80u8, 0x40u8, 0x80u8, 0x10u8,
@@ -48,7 +48,7 @@ const PNMASK: [u8; 256] = [0; 256];/*
 		0x80u8, 0x40u8, 0x80u8, 0x20u8, 0x80u8, 0x40u8, 0x80u8,
 	8u8, 0x80u8, 0x40u8, 0x80u8, 0x20u8, 0x80u8, 0x40u8, 0x80u8, 0x10u8,
 		0x80u8, 0x40u8, 0x80u8, 0x20u8, 0x80u8, 0x40u8, 0x80u8
-];*/
+];
 
 const PFIRA: [i32; 64] = [
 	(PFIRAM * (2i32 * (0i32 >> 0i32 & 1i32) - 1i32) as f64 + PFIRAM2 * (2i32 * (0i32 >> 1i32 & 1i32) - 1i32) as f64 + PFIRAM3 * (2i32 * (0i32 >> 2i32 & 1i32) - 1i32) as f64 + PFIRAM4 * (2i32 * (0i32 >> 3i32 & 1i32) - 1i32) as f64 + PFIRAM5 * (2i32 * (0i32 >> 4i32 & 1i32) - 1i32) as f64 + PFIRAM6 * (2i32 * (0i32 >> 5i32 & 1i32) - 1i32) as f64) as i32,
@@ -184,7 +184,8 @@ const PFIRB: [i32; 64] = [
 	(PFIRBM * (2i32 * (56i32 + 7i32 >> 0i32 & 1i32) - 1i32) as f64 + PFIRBM2 * (2i32 * (56i32 + 7i32 >> 1i32 & 1i32) - 1i32) as f64 + PFIRBM3 * (2i32 * (56i32 + 7i32 >> 2i32 & 1i32) - 1i32) as f64 + PFIRBM4 * (2i32 * (56i32 + 7i32 >> 3i32 & 1i32) - 1i32) as f64 + PFIRBM5 * (2i32 * (56i32 + 7i32 >> 4i32 & 1i32) - 1i32) as f64 + PFIRBM6 * (2i32 * (56i32 + 7i32 >> 5i32 & 1i32) - 1i32) as f64) as i32
 ];
 
-pub struct PinkNoiseGenerator {
+/// Pink Noise Generator.
+pub struct PnkGenerator {
 	lfsr: i32,
 	inc: i32,
 	dec: i32,
@@ -194,7 +195,8 @@ pub struct PinkNoiseGenerator {
 	bit: i32,
 }
 
-impl PinkNoiseGenerator {
+impl PnkGenerator {
+	/// Create a new Pink Noise Generator.
 	pub fn new() -> Self {
 		Self {
 			lfsr: 0x5eed41f5i32,
@@ -259,7 +261,7 @@ impl PinkNoiseGenerator {
 		self.b()
 	}
 
-	pub fn gen(&mut self) -> i16 {
+	pub(crate) fn gen(&mut self) -> f64 {
 		// Different functions for each sample.
 		let r = match self.which {
 			0 => {
@@ -283,7 +285,7 @@ impl PinkNoiseGenerator {
 			14 => self.c(),
 			15 => self.a(),
 			_ => unreachable!()
-		};
+		} as f64 / (::std::i16::MAX as f64);
 		self.which = (self.which + 1) % 16;
 		r
 	}

@@ -1,2 +1,2 @@
 [target.arm-unknown-linux-gnueabihf]
-linker = "/home/aldaron/pi/tools-master/arm-bcm2708/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc"
+linker = "tools/arm-bcm2708/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc"

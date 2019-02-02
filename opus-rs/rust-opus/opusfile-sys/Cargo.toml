@@ -7,12 +7,8 @@ license = "MIT"
 keywords = ["bindings", "opusfile"]
 repository = "https://github.com/lgvz/rust-opus"
 links = "opusfile"
-build = "build.rs"
 
 [dependencies]
 libc = "0.2"
 ogg-sys = "0.0.9"
-opus-sys = "0.2"
-
-[build-dependencies]
-pkg-config = "0.3.8"
+opus-sys = { path = "../opus-sys" }

@@ -14,3 +14,4 @@ cargo build --bin mute --features="microphone" --target=arm-unknown-linux-gnueab
 
 # Deploy
 # scp target/arm-unknown-linux-gnueabihf/release/mute pi@raspberrypi.local://home/pi/mute
+# scp python/controller.py pi@raspberrypi.local://home/pi

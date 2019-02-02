@@ -46,10 +46,8 @@
 use libc::{c_int, c_uint, c_void, ssize_t};
 use alsa::alsa;
 use alsa::alsa::Context;
-use std::marker::PhantomData;
-use std::mem::size_of;
 use std::ffi::{CString};
-use std::{ptr, cell};
+use std::{ptr};
 use super::error::*;
 use super::{Direction, ValueOr};
 

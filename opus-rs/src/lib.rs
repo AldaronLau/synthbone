@@ -18,14 +18,23 @@ extern crate lazy_static;
 #[macro_use]
 extern crate dl_api;
 
-mod ffi;
+pub enum OpusEncoder { }
+pub enum OpusDecoder { }
+pub enum OpusRepacketizer { }
+
+pub const OPUS_OK: i32 =  0;
+pub const OPUS_BAD_ARG: i32 = -1;
+pub const OPUS_BUFFER_TOO_SMALL: i32 = -2;
+pub const OPUS_INTERNAL_ERROR: i32 = -3;
+pub const OPUS_INVALID_PACKET: i32 = -4;
+pub const OPUS_UNIMPLEMENTED: i32 = -5;
+pub const OPUS_INVALID_STATE: i32 = -6;
+pub const OPUS_ALLOC_FAIL: i32 = -7;
 
 use std::ffi::CStr;
 use std::marker::PhantomData;
 
 use libc::c_int;
-
-use ffi::*;
 
 const DL: &'static str = "libopus.so.0";
 
@@ -95,7 +104,7 @@ dl_api!(Ffi, DL,
 // Constants
 
 lazy_static! {
-	static ref FFI: Ffi = unsafe { Ffi::new().unwrap() };
+	static ref FFI: Ffi = Ffi::new().unwrap();
 }
 
 // Generic CTLs
@@ -210,13 +219,13 @@ impl ErrorCode {
 	fn from_int(value: c_int) -> ErrorCode {
 		use ErrorCode::*;
 		match value {
-			ffi::OPUS_BAD_ARG => BadArg,
-			ffi::OPUS_BUFFER_TOO_SMALL => BufferTooSmall,
-			ffi::OPUS_INTERNAL_ERROR => InternalError,
-			ffi::OPUS_INVALID_PACKET => InvalidPacket,
-			ffi::OPUS_UNIMPLEMENTED => Unimplemented,
-			ffi::OPUS_INVALID_STATE => InvalidState,
-			ffi::OPUS_ALLOC_FAIL => AllocFail,
+			OPUS_BAD_ARG => BadArg,
+			OPUS_BUFFER_TOO_SMALL => BufferTooSmall,
+			OPUS_INTERNAL_ERROR => InternalError,
+			OPUS_INVALID_PACKET => InvalidPacket,
+			OPUS_UNIMPLEMENTED => Unimplemented,
+			OPUS_INVALID_STATE => InvalidState,
+			OPUS_ALLOC_FAIL => AllocFail,
 			_ => Unknown,
 		}
 	}
@@ -282,7 +291,7 @@ macro_rules! ctl {
 /// An Opus encoder with associated state.
 #[derive(Debug)]
 pub struct Encoder {
-	ptr: *mut ffi::OpusEncoder,
+	ptr: *mut OpusEncoder,
 	channels: Channels,
 }
 
@@ -295,7 +304,7 @@ impl Encoder {
 			channels as c_int,
 			mode as c_int,
 			&mut error) };
-		if error != ffi::OPUS_OK || ptr.is_null() {
+		if error != OPUS_OK || ptr.is_null() {
 			Err(Error::from_code("opus_encoder_create", error))
 		} else {
 			Ok(Encoder { ptr: ptr, channels: channels })
@@ -472,7 +481,7 @@ impl Drop for Encoder {
 /// An Opus decoder with associated state.
 #[derive(Debug)]
 pub struct Decoder {
-	ptr: *mut ffi::OpusDecoder,
+	ptr: *mut OpusDecoder,
 	channels: Channels,
 }
 
@@ -484,7 +493,7 @@ impl Decoder {
 			sample_rate as i32,
 			channels as c_int,
 			&mut error) };
-		if error != ffi::OPUS_OK || ptr.is_null() {
+		if error != OPUS_OK || ptr.is_null() {
 			Err(Error::from_code("opus_decoder_create", error))
 		} else {
 			Ok(Decoder { ptr: ptr, channels: channels })
@@ -610,7 +619,6 @@ impl Drop for Decoder {
 /// Analyze raw Opus packets.
 pub mod packet {
 	use super::*;
-	use super::ffi;
 	use std::{ptr, slice};
 	use libc::c_int;
 
@@ -744,7 +752,7 @@ impl SoftClip {
 /// A repacketizer used to merge together or split apart multiple Opus packets.
 #[derive(Debug)]
 pub struct Repacketizer {
-	ptr: *mut ffi::OpusRepacketizer,
+	ptr: *mut OpusRepacketizer,
 }
 
 impl Repacketizer {
@@ -752,7 +760,7 @@ impl Repacketizer {
 	pub fn new() -> Result<Repacketizer> {
 		let ptr = unsafe { (FFI.opus_repacketizer_create)() };
 		if ptr.is_null() {
-			Err(Error::from_code("opus_repacketizer_create", ffi::OPUS_ALLOC_FAIL))
+			Err(Error::from_code("opus_repacketizer_create", OPUS_ALLOC_FAIL))
 		} else {
 			Ok(Repacketizer { ptr: ptr })
 		}

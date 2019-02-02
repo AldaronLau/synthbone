@@ -16,4 +16,4 @@ documentation = "https://wombat.platymuus.com/rustdoc/opus_0.2.0/"
 [dependencies]
 lazy_static = "0.2"
 libc = "0.2"
-dl_api = { path = "../../../Downloads/rust-dlopen" }
+dl_api = "0.1"

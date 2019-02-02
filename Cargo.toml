@@ -17,14 +17,15 @@ path = "src/synth.rs"
 
 [dependencies]
 sample = "0.9"
-alsa = "0.2"
+adi = { version = "0.12", default-features = false }
 byteorder = "1.2"
 pitch = "0.1"
-rand = "0.5"
-
-[replace]
-"alsa:0.2.0" = { path = "alsa-rs" }
+twang = "0.1"
 
 [features]
-microphone = ["alsa/microphone"]
-speaker = ["alsa/speaker"]
+microphone = ["speaker"] # ["adi/microphone"]
+speaker = ["adi/speaker"]
+
+[replace]
+"pitch:0.1.3" = { path = "../pitch" }
+"adi_speaker:0.0.1" = { path = "../adi_speaker" }
