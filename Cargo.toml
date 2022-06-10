@@ -27,5 +27,5 @@ microphone = ["speaker"] # ["adi/microphone"]
 speaker = ["adi/speaker"]
 
 [replace]
-"pitch:0.1.3" = { path = "../pitch" }
-"adi_speaker:0.0.1" = { path = "../adi_speaker" }
+#"pitch:0.1.3" = { path = "../pitch" }
+#"adi_speaker:0.0.1" = { path = "../adi_speaker" }
