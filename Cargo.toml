@@ -18,7 +18,7 @@ path = "src/synth.rs"
 [dependencies]
 sample = "0.9"
 adi = { version = "0.12", default-features = false }
-byteorder = "1.2"
+byteorder = "1.5"
 pitch = "0.1"
 twang = "0.1"
 
