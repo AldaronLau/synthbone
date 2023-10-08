@@ -132,9 +132,9 @@ checksum = "9c33a3c44ca05fa6f1807d8e6743f3824e8509beca625669633be0acbdf509dc"
 
 [[package]]
 name = "sample"
-version = "0.9.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8f1d3843c8c3e3d8a89c07791329eaae60272ca34e6c570b6b5ae8412fa76d"
+checksum = "36ba94921dc69eb59cf881cda681c5556026835c83ca5a7663947557fafe7402"
 
 [[package]]
 name = "twang"
